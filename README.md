@@ -9,4 +9,5 @@ level 3 - hashing the password while in the database and just comparing the hash
 
 level 4 - hashing and salting using bcrypt
 
-level 5 - cookies sessions and 
+level 5 - cookies sessions and passport the order of the code is important
+
