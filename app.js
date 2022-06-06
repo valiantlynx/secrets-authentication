@@ -30,7 +30,8 @@ mongoose.connect("mongodb://localhost:27017/userDB");
 const userSchema = new mongoose.Schema({
     email: String,
     password: String,
-    googleId: String
+    googleId: String,
+    secret: String
 });
 
 userSchema.plugin(passportLocalMongoose);
@@ -61,8 +62,8 @@ passport.use(new GoogleStrategy({
     userProfileURL: process.env.AUTH_PROVIDER_X509_CERT_URL
   },
   function(accessToken, refreshToken, profile, cb) {
-    console.log(profile);
-    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+    //console.log(profile);
+    User.findOrCreate({ username: profile.displayName, googleId: profile.id }, function (err, user) {
       return cb(err, user);
     });
   }
@@ -101,6 +102,7 @@ app.route('/login')
        req.login(user, function(err){
            if (err){
                console.log(err);
+               //res.send(err + "Are you registered?");
            }else{
                passport.authenticate("local")(req, res, function(){
                    res.redirect("/secrets");
@@ -125,12 +127,48 @@ app.route('/login')
 //secrets    
 app.route('/secrets')
     .get(function(req, res){
+        User.find({"secret": {$ne: null}}, function(err, foundUsers){
+            if (err) { 
+                console.log(err);
+            }else{
+                if (foundUsers){
+                    res.render("secrets", {usersWithSecrets: foundUsers});
+
+                }
+            }
+        });
+
+    });
+
+//submit secret
+app.route('/submit')
+    .get(function(req, res){
         if(req.isAuthenticated()){
-            res.render("secrets");
+            res.render("submit");
         }else{
             res.redirect("/login");
         }
 
+    })
+    .post(function(req, res){
+        const submittedSecret = req.body.secret;
+        console.log(req.user);
+
+        User.findById(req.user.id, function(err, foundUser){
+            if(err){
+                console.log(err);
+            }else{
+                if(foundUser){
+                    foundUser.secret = submittedSecret;
+                    foundUser.save(function(){
+                        res.redirect('/secrets');
+                    })
+                } else{
+                    console.log("User not found.")
+                }
+            }
+
+        });
     });
 
 //register
@@ -142,8 +180,9 @@ app.route('/register')
       
         User.register({username: req.body.username}, req.body.password, function (err, user){
             if(err) {
-                console.log(err);
                 res.redirect("/register");
+                console.log(err);
+                
             } else {
                 passport.authenticate("local")(req, res, function (){
                     res.redirect("/secrets");
