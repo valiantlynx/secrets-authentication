@@ -11,3 +11,4 @@ level 4 - hashing and salting using bcrypt
 
 level 5 - cookies sessions and passport the order of the code is important
 
+level 6 - oauth third party authonticaters. it delegates the responsibility of storing and protecting the passwords to other companies like google and facebook github etc. they have more engineers and better reasources for protecting hehe
